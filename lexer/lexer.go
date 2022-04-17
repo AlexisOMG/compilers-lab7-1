@@ -78,14 +78,51 @@ type Lexer struct {
 	text     string
 	regs     []regWithKind
 	curIndex int
+	tokens   []Token
+	filtered bool
+	tokIndex int
 }
 
-func (l *Lexer) HasNext() bool {
+func (l *Lexer) hasNextSymbol() bool {
 	return len(l.text) > 0
 }
 
-func (l *Lexer) NextToken() Token {
-	if !l.HasNext() {
+func (l *Lexer) filter() {
+	if l.filtered {
+		return
+	}
+
+	for l.hasNextSymbol() {
+		l.tokens = append(l.tokens, l.nextUnfilteredToken())
+	}
+
+	filteredTokens := make([]Token, 0, len(l.tokens))
+
+	isRule := false
+
+	for i, t := range l.tokens {
+		switch t.Kind {
+		case RuleKeyword:
+			isRule = true
+		case AxiomKeyword, NTermKeyword, TermKeyword:
+			isRule = false
+		}
+
+		if t.Kind == NewLine {
+			if isRule && !(i == len(l.tokens)-1 || (i < len(l.tokens)-1 && l.tokens[i+1].Kind == RuleKeyword)) {
+				filteredTokens = append(filteredTokens, t)
+			}
+		} else {
+			filteredTokens = append(filteredTokens, t)
+		}
+	}
+
+	l.tokens = filteredTokens
+	l.filtered = true
+}
+
+func (l *Lexer) nextUnfilteredToken() Token {
+	if !l.hasNextSymbol() {
 		return Token{
 			Kind:  EOF,
 			Start: l.curIndex + 1,
@@ -96,7 +133,7 @@ func (l *Lexer) NextToken() Token {
 	if l.text[0] == ' ' || l.text[0] == '\t' {
 		l.text = l.text[1:]
 		l.curIndex += 1
-		return l.NextToken()
+		return l.nextUnfilteredToken()
 	}
 
 	for _, r := range l.regs {
@@ -128,6 +165,31 @@ func (l *Lexer) NextToken() Token {
 	return tok
 }
 
+func (l *Lexer) HasNext() bool {
+	if !l.filtered {
+		l.filter()
+	}
+
+	return l.tokIndex < len(l.tokens)
+}
+
+func (l *Lexer) NextToken() Token {
+	if !l.filtered {
+		l.filter()
+	}
+
+	if !l.HasNext() {
+		return Token{
+			Kind:  EOF,
+			Start: l.curIndex + 1,
+			End:   l.curIndex + 1,
+		}
+	}
+
+	l.tokIndex += 1
+	return l.tokens[l.tokIndex-1]
+}
+
 func NewLexer(pathToFile string) (*Lexer, error) {
 	data, err := ioutil.ReadFile(pathToFile)
 	if err != nil {
@@ -137,6 +199,7 @@ func NewLexer(pathToFile string) (*Lexer, error) {
 	return &Lexer{
 		text:     string(data),
 		curIndex: 1,
+		filtered: false,
 		regs: []regWithKind{
 			{
 				reg:  axiomKeywordReg.Copy(),

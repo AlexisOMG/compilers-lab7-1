@@ -14,7 +14,7 @@ var (
 			Value: "S",
 		}: [][]common.Expr{
 			{
-				{"AxiomKeyword", common.Term}, {"Nterm", common.Term}, {"NTermKeyword", common.Term}, {"N", common.NTerm}, {"T", common.NTerm}, {"R", common.NTerm},
+				{"AxiomKeyword", common.Term}, {"Nterm", common.Term}, {"NTermKeyword", common.Term}, {"Nterm", common.Term}, {"N", common.NTerm}, {"T", common.NTerm}, {"R", common.NTerm},
 			},
 		},
 		common.Expr{
@@ -144,9 +144,9 @@ type Node struct {
 }
 
 func (n *Node) Print() {
-	fmt.Print(n.expr.Value)
+	fmt.Print(n.expr.Value, " ")
 	if n.expr.Kind == common.NTerm {
-		fmt.Print(" -> ")
+		fmt.Print("-> ")
 		for _, r := range n.rule {
 			fmt.Print(r.Value, " ")
 		}
@@ -159,7 +159,7 @@ func (n *Node) Print() {
 			child.Print()
 		}
 	} else {
-		fmt.Println()
+		fmt.Println(n.value)
 	}
 }
 

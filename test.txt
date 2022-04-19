@@ -2,6 +2,7 @@ $AXIOM E
 $NTERM E' T T' F
 $TERM "+" "*" "(" ")" "n"
 
+* правила грамматики
 $RULE E = T E'
 $RULE E' = "+" T E'
             $EPS

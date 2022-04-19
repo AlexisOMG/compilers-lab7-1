@@ -17,6 +17,7 @@ var (
 	termReg         = regexp.MustCompile(`^"[^ \nA-Z]+"`)
 	equalReg        = regexp.MustCompile(`^=`)
 	newLineReg      = regexp.MustCompile(`^\n`)
+	comment         = regexp.MustCompile(`^\*[^\n]*`)
 )
 
 const (
@@ -145,6 +146,12 @@ func (l *Lexer) nextUnfilteredToken() Token {
 	if l.text[0] == ' ' || l.text[0] == '\t' {
 		l.text = l.text[1:]
 		l.curIndex += 1
+		return l.nextUnfilteredToken()
+	}
+
+	if loc := comment.FindStringIndex(l.text); loc != nil {
+		l.text = l.text[loc[1]:]
+		l.curIndex += (loc[1] - loc[0])
 		return l.nextUnfilteredToken()
 	}
 

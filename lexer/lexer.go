@@ -3,6 +3,8 @@ package lexer
 import (
 	"io/ioutil"
 	"regexp"
+
+	"github.com/AlexisOMG/compilers-lab7-1/common"
 )
 
 var (
@@ -72,6 +74,16 @@ type Token struct {
 	Value string
 	Start int
 	End   int
+}
+
+func (t *Token) ToExpr() common.Expr {
+	if t.Kind == EOF {
+		return common.Dollar
+	}
+	return common.Expr{
+		Kind:  common.Term,
+		Value: t.Kind.ToString(),
+	}
 }
 
 type Lexer struct {
@@ -174,10 +186,6 @@ func (l *Lexer) HasNext() bool {
 }
 
 func (l *Lexer) NextToken() Token {
-	if !l.filtered {
-		l.filter()
-	}
-
 	if !l.HasNext() {
 		return Token{
 			Kind:  EOF,

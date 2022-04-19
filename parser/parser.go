@@ -137,52 +137,52 @@ var (
 )
 
 type Node struct {
-	expr     common.Expr
-	rule     []common.Expr
-	value    string
+	Expr     common.Expr
+	Rule     []common.Expr
+	Value    string
 	Children []*Node
 }
 
 func (n *Node) Print() {
-	fmt.Print(n.expr.Value, " ")
-	if n.expr.Kind == common.NTerm {
+	fmt.Print(n.Expr.Value, " ")
+	if n.Expr.Kind == common.NTerm {
 		fmt.Print("-> ")
-		for _, r := range n.rule {
+		for _, r := range n.Rule {
 			fmt.Print(r.Value, " ")
 		}
 		fmt.Print("\n\tChildren: ")
 		for _, child := range n.Children {
-			fmt.Print(child.expr.Value, " ")
+			fmt.Print(child.Expr.Value, " ")
 		}
 		fmt.Println()
 		for _, child := range n.Children {
 			child.Print()
 		}
 	} else {
-		fmt.Println(n.value)
+		fmt.Println(n.Value)
 	}
 }
 
-type StackItem struct {
+type stackItem struct {
 	expr   common.Expr
 	parent *Node
 }
 
-type Stack []StackItem
+type stack []stackItem
 
 func Parse(table map[common.Expr]map[common.Expr][][]common.Expr, lex *lexer.Lexer, axiom common.Expr) (*Node, error) {
-	var stack Stack
+	var st stack
 	fakeRoot := Node{
-		expr: common.Expr{
+		Expr: common.Expr{
 			Value: "S'",
 			Kind:  common.NTerm,
 		},
 	}
-	stack = append(stack, StackItem{
+	st = append(st, stackItem{
 		expr:   common.Dollar,
 		parent: &fakeRoot,
 	},
-		StackItem{
+		stackItem{
 			expr:   axiom,
 			parent: &fakeRoot,
 		},
@@ -192,16 +192,16 @@ func Parse(table map[common.Expr]map[common.Expr][][]common.Expr, lex *lexer.Lex
 	if a.Kind == lexer.Error {
 		return nil, fmt.Errorf("syntax error: %v", a)
 	}
-	for stack[len(stack)-1].expr != common.Dollar {
-		x := stack[len(stack)-1]
+	for st[len(st)-1].expr != common.Dollar {
+		x := st[len(st)-1]
 		// fmt.Println("STACK: ", stack)
 		// fmt.Println("A: ", a, a.Kind.ToString())
-		stack = stack[:len(stack)-1]
+		st = st[:len(st)-1]
 		if x.expr.Kind == common.Term {
 			if x.expr.Value == a.Kind.ToString() {
 				x.parent.Children = append(x.parent.Children, &Node{
-					expr:  a.ToExpr(),
-					value: a.Value,
+					Expr:  a.ToExpr(),
+					Value: a.Value,
 				})
 				a = lex.NextToken()
 				if a.Kind == lexer.Error {
@@ -212,13 +212,13 @@ func Parse(table map[common.Expr]map[common.Expr][][]common.Expr, lex *lexer.Lex
 			}
 		} else if exprs := table[x.expr][a.ToExpr()]; exprs[0][0] != common.Error {
 			node := Node{
-				expr: x.expr,
-				rule: exprs[0],
+				Expr: x.expr,
+				Rule: exprs[0],
 			}
 			x.parent.Children = append(x.parent.Children, &node)
 			for i := len(exprs[0]) - 1; i >= 0; i-- {
 				if exprs[0][i] != common.Epsilon {
-					stack = append(stack, StackItem{
+					st = append(st, stackItem{
 						expr:   exprs[0][i],
 						parent: &node,
 					})

@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/AlexisOMG/compilers-lab7-1/common"
 	"github.com/AlexisOMG/compilers-lab7-1/lexer"
@@ -143,20 +144,21 @@ type Node struct {
 	Children []*Node
 }
 
-func (n *Node) Print() {
+func (n *Node) Print(depth int) {
 	fmt.Print(n.Expr.Value, " ")
 	if n.Expr.Kind == common.NTerm {
 		fmt.Print("-> ")
 		for _, r := range n.Rule {
 			fmt.Print(r.Value, " ")
 		}
-		fmt.Print("\n\tChildren: ")
-		for _, child := range n.Children {
-			fmt.Print(child.Expr.Value, " ")
-		}
+		// fmt.Print("\n\tChildren: ")
+		// for _, child := range n.Children {
+		// 	fmt.Print(child.Expr.Value, " ")
+		// }
 		fmt.Println()
 		for _, child := range n.Children {
-			child.Print()
+			fmt.Print(strings.Repeat(" ", depth))
+			child.Print(depth + 1)
 		}
 	} else {
 		fmt.Println(n.Value)
